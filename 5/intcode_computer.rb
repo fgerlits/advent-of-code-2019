@@ -46,13 +46,39 @@ class Instruction
                 a = get(context, 0)
                 output(a)
                 context.advance(2)
+            when 5
+                a = get(context, 0)
+                b = get(context, 1)
+                if a != 0
+                    context.jump(b)
+                else
+                    context.advance(3)
+                end
+            when 6
+                a = get(context, 0)
+                b = get(context, 1)
+                if a == 0
+                    context.jump(b)
+                else
+                    context.advance(3)
+                end
+            when 7
+                a = get(context, 0)
+                b = get(context, 1)
+                put(context, 2, if a < b then 1 else 0 end)
+                context.advance(4)
+            when 8
+                a = get(context, 0)
+                b = get(context, 1)
+                put(context, 2, if a == b then 1 else 0 end)
+                context.advance(4)
             when 99
                 exit
         end
     end
 
     def input
-        value = STDIN.readline.to_i
+        STDIN.readline.to_i
     end
 
     def output(value)
@@ -70,6 +96,10 @@ class Computer
 
     def advance(steps)
         @ip += steps
+    end
+
+    def jump(position)
+        @ip = position
     end
 
     def step
