@@ -11,17 +11,17 @@ template<typename NodeName, typename Payload>
 class Node {
 private:
     NodeName const name;
-    Node const* const parent;
+    Node * const parent;
     std::vector<Node *> children;
     Payload value;
 
 public:
-    Node(NodeName const& name_, Node const* parent_)
+    Node(NodeName const& name_, Node * parent_)
         : name(name_), parent(parent_), value() {
     }
 
     NodeName getName() const { return name; }
-    Node const* getParent() const { return parent; }
+    Node * getParent() { return parent; }
     Payload getValue() const { return value; }
     void setValue(Payload const& value_) { value = value_; }
 
@@ -66,6 +66,7 @@ public:
     }
 
     NodeType const& getRootNode() const { return rootNode; }
+    NodeType * getNodeByName(NodeName const& nodeName) { return nodeLookupTable.at(nodeName); }
 
     void addChild(NodeName const& parentName, NodeName const& childName) {
         if (nodeLookupTable.count(parentName) == 0) {
