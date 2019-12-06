@@ -3,12 +3,17 @@
 
 #include "directed_acyclic_graph.hpp"
 
-struct DepthSummerUpper {
-    int total = 0;
+struct DepthCalculator {
     void operator()(Node<std::string, int> & node) {
         int depth = node.getParent()->getValue() + 1;
-        total += depth;
         node.setValue(depth);
+    }
+};
+
+struct DepthSummer {
+    int total = 0;
+    void operator()(Node<std::string, int> & node) {
+        total += node.getValue();
     }
 };
 
@@ -23,7 +28,9 @@ int main() {
     };
 
     DirectedAcyclicGraph<std::string, int> graph{input, "COM"};
-    DepthSummerUpper summer;
+    DepthCalculator calculator;
+    graph.breadthFirstWalk(calculator);
+    DepthSummer summer;
     graph.breadthFirstWalk(summer);
     std::cout << summer.total << '\n';
 
