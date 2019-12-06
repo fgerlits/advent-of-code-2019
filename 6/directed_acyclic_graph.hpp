@@ -17,13 +17,13 @@ private:
 
 public:
     Node(NodeName const& name_, Node const* parent_)
-        : name(name_), parent(parent_) {
+        : name(name_), parent(parent_), value() {
     }
 
     NodeName getName() const { return name; }
     Node const* getParent() const { return parent; }
     Payload getValue() const { return value; }
-    void setValue(Payload const& value_) { value_ = value; }
+    void setValue(Payload const& value_) { value = value_; }
 
     std::vector<Node *> const& getChildren() const { return children; }
     Node * addChild(NodeName childName) {
@@ -33,12 +33,12 @@ public:
     }
 };
 
-template<typename NodeName, typename Payload, typename Callback>
+template<typename NodeName, typename Payload>
 class DirectedAcyclicGraph {
 private:
     using NodeType = Node<NodeName, Payload>;
 
-    Node<NodeName, Payload> rootNode;
+    NodeType rootNode;
     std::unordered_map<NodeName, NodeType *> nodeLookupTable;
 
 public:
@@ -65,6 +65,8 @@ public:
         }
     }
 
+    NodeType const& getRootNode() const { return rootNode; }
+
     void addChild(NodeName const& parentName, NodeName const& childName) {
         if (nodeLookupTable.count(parentName) == 0) {
             throw new std::logic_error{"parent not found"};
@@ -77,21 +79,26 @@ public:
         nodeLookupTable[childName] = child;
     }
 
-    NodeType const& getRootNode() const { return rootNode; }
-};
-
-template<typename N, typename P, typename C>
-std::ostream & operator<<(std::ostream & out, DirectedAcyclicGraph<N, P, C> const& graph) {
-    using NodeType = Node<N, P>;
-    std::queue<NodeType const*> todoList;
-    todoList.push(&graph.getRootNode());
-    while (! todoList.empty()) {
-        NodeType const* node = todoList.front();
-        todoList.pop();
-        for (NodeType const* child : node->getChildren()) {
-            out << node->getName() << ')' << child->getName() << '\n';
-            todoList.push(child);
+    template<typename Callback>
+    void breadthFirstWalk(Callback & callback) {
+        std::queue<NodeType *> todoList;
+        todoList.push(&rootNode);
+        while (! todoList.empty()) {
+            NodeType * node = todoList.front();
+            todoList.pop();
+            for (NodeType * child : node->getChildren()) {
+                callback(*child);
+                todoList.push(child);
+            }
         }
     }
+};
+
+template<typename N, typename P>
+std::ostream & operator<<(std::ostream & out, DirectedAcyclicGraph<N, P> & graph) {
+    auto printer = [&out](Node<N, P> const& node) {
+        out << node.getParent()->getName() << ')' << node.getName() << '\n';
+    };
+    graph.breadthFirstWalk(printer);
     return out;
 }
