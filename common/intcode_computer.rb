@@ -40,8 +40,12 @@ class Instruction
                 context.advance(4)
             when 3
                 a = context.input()
-                put(context, 0, a)
-                context.advance(2)
+                if !a.nil?
+                    put(context, 0, a)
+                    context.advance(2)
+                else
+                    return :wait_for_input
+                end
             when 4
                 a = get(context, 0)
                 context.output(a)
@@ -73,9 +77,9 @@ class Instruction
                 put(context, 2, if a == b then 1 else 0 end)
                 context.advance(4)
             when 99
-                return false
+                return :exit
         end
-        return true
+        return :continue
     end
 end
 
@@ -85,6 +89,8 @@ class Computer
     def initialize(program)
         @tape = program
         @ip = 0
+        @input = []
+        @output = []
     end
 
     def advance(steps)
@@ -103,14 +109,22 @@ class Computer
         @output << value
     end
 
-    def run(input)
-        @input = input
+    def add_inputs(values)
+        @input += values
+    end
+
+    def read_and_clear_output
+        output = @output
         @output = []
+        output
+    end
+
+    def run
         loop do
             instruction = Instruction.new(@tape[@ip])
-            continue = instruction.execute(self)
-            if !continue
-                return @output
+            return_code = instruction.execute(self)
+            if return_code != :continue
+                return return_code
             end
         end
     end
