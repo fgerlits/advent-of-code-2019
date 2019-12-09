@@ -14,16 +14,21 @@ class Instruction
     end
 
     def get(context, position)
-        input = context.tape[context.ip + position + 1]
+        input = context.read(context.ip + position + 1)
         case mode(position)
-        when 0 then context.tape[input]
-        when 1 then input
+            when 0 then context.read(input)
+            when 1 then input
+            when 2 then context.read(context.relative_base + input)
         end
     end
 
     def put(context, position, value)
-        address = context.tape[context.ip + position + 1]
-        context.tape[address] = value
+        input = context.read(context.ip + position + 1)
+        case mode(position)
+            when 0 then context.write(input, value)
+            when 1 then throw "can't write in mode 1"
+            when 2 then context.write(context.relative_base + input, value)
+        end
     end
 
     def execute(context)
@@ -76,21 +81,40 @@ class Instruction
                 b = get(context, 1)
                 put(context, 2, if a == b then 1 else 0 end)
                 context.advance(4)
+            when 9
+                a = get(context, 0)
+                context.relative_base += a
+                context.advance(2)
             when 99
                 return :exit
+            else
+                throw "unknown opcode #{@instr}"
         end
         return :continue
     end
 end
 
 class Computer
-    attr_reader :tape, :ip
+    attr_reader :ip
+    attr_accessor :relative_base
 
     def initialize(program)
         @tape = program
         @ip = 0
+        @relative_base = 0
         @input = []
         @output = []
+    end
+
+    def read(address)
+        if address < 0
+            throw "can't read the tape at a negative position"
+        end
+        @tape[address] || 0
+    end
+
+    def write(address, value)
+        @tape[address] = value
     end
 
     def advance(steps)
