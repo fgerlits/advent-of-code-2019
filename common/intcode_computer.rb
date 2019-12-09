@@ -19,6 +19,8 @@ class Instruction
             when 0 then context.read(input)
             when 1 then input
             when 2 then context.read(context.relative_base + input)
+            else
+                throw "unexpected mode: #{mode(position)} in instruction #{self}"
         end
     end
 
@@ -28,6 +30,8 @@ class Instruction
             when 0 then context.write(input, value)
             when 1 then throw "can't write in mode 1"
             when 2 then context.write(context.relative_base + input, value)
+            else
+                throw "unexpected mode: #{mode(position)} in instruction #{self}"
         end
     end
 
@@ -37,54 +41,54 @@ class Instruction
                 a = get(context, 0)
                 b = get(context, 1)
                 put(context, 2, a + b)
-                context.advance(4)
+                context.ip += 4
             when 2
                 a = get(context, 0)
                 b = get(context, 1)
                 put(context, 2, a * b)
-                context.advance(4)
+                context.ip += 4
             when 3
                 a = context.input()
                 if !a.nil?
                     put(context, 0, a)
-                    context.advance(2)
+                    context.ip += 2
                 else
                     return :wait_for_input
                 end
             when 4
                 a = get(context, 0)
                 context.output(a)
-                context.advance(2)
+                context.ip += 2
             when 5
                 a = get(context, 0)
                 b = get(context, 1)
                 if a != 0
-                    context.jump(b)
+                    context.ip = b
                 else
-                    context.advance(3)
+                    context.ip += 3
                 end
             when 6
                 a = get(context, 0)
                 b = get(context, 1)
                 if a == 0
-                    context.jump(b)
+                    context.ip = b
                 else
-                    context.advance(3)
+                    context.ip += 3
                 end
             when 7
                 a = get(context, 0)
                 b = get(context, 1)
                 put(context, 2, if a < b then 1 else 0 end)
-                context.advance(4)
+                context.ip += 4
             when 8
                 a = get(context, 0)
                 b = get(context, 1)
                 put(context, 2, if a == b then 1 else 0 end)
-                context.advance(4)
+                context.ip += 4
             when 9
                 a = get(context, 0)
                 context.relative_base += a
-                context.advance(2)
+                context.ip += 2
             when 99
                 return :exit
             else
@@ -95,8 +99,7 @@ class Instruction
 end
 
 class Computer
-    attr_reader :ip
-    attr_accessor :relative_base
+    attr_accessor :ip, :relative_base
 
     def initialize(program)
         @tape = program
@@ -114,15 +117,10 @@ class Computer
     end
 
     def write(address, value)
+        if address < 0
+            throw "can't write the tape at a negative position"
+        end
         @tape[address] = value
-    end
-
-    def advance(steps)
-        @ip += steps
-    end
-
-    def jump(position)
-        @ip = position
     end
 
     def input
