@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <numeric>
 #include <ostream>
 #include <string>
@@ -51,6 +52,8 @@ Direction direction(Coords const& from, Coords const& to) {
     return simplify(to - from);
 }
 
+constexpr char ASTEROID = '#';
+
 struct Grid {
     std::vector<std::string> grid;
     int xsize, ysize;
@@ -62,4 +65,32 @@ struct Grid {
     char at(std::size_t x, std::size_t y) const {
         return grid.at(y).at(x);
     }
+
+	std::vector<Coords> findAsteroids() const {
+		std::vector<Coords> asteroids;
+		for (int y = 0; y < ysize; ++y) {
+			for (int x = 0; x < xsize; ++x) {
+				if (at(x, y) == ASTEROID) {
+					asteroids.push_back(Coords{x, y});
+				}
+			}
+		}
+		return asteroids;
+	}
 };
+
+std::vector<Direction> computeDirections(Coords const& asteroid, std::vector<Coords> asteroids) {
+    std::vector<Direction> directions;
+    for (Coords const& otherAsteroid : asteroids) {
+        if (otherAsteroid != asteroid) {
+            directions.push_back(simplify(direction(asteroid, otherAsteroid)));
+        }
+    }
+    return directions;
+}
+
+int countUnique(std::vector<Direction> directions) {
+    std::sort(begin(directions), end(directions));
+    auto last = std::unique(begin(directions), end(directions));
+    return std::distance(begin(directions), last);
+}
