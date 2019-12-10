@@ -1,6 +1,7 @@
 #pragma once
 
 #include <algorithm>
+#include <cmath>
 #include <numeric>
 #include <ostream>
 #include <string>
@@ -22,8 +23,24 @@ std::ostream& operator<<(std::ostream& out, Coords const& coords) {
     return out << '(' << coords.x << ", " << coords.y << ')';
 }
 
+constexpr double PI = std::atan(1) * 4;
+
 struct Direction {
     int x, y;
+
+    int absoluteManhattanLength() const {
+        return std::abs(x) + std::abs(y);
+    }
+
+    // returns angle between 0 (incl) and 2 * PI (non-incl)
+    double angle() const {
+        double ratio = double(y) / double(x);
+        if (x >= 0) {
+            return std::atan(ratio) + PI/2;
+        } else {
+            return std::atan(ratio) + PI/2 + PI;
+        }
+    }
 };
 
 bool operator<(Direction const& left, Direction const& right) {
@@ -34,6 +51,10 @@ bool operator<(Direction const& left, Direction const& right) {
 
 bool operator==(Direction const& left, Direction const& right) {
     return left.x == right.x && left.y == right.y;
+}
+
+std::ostream& operator<<(std::ostream& out, Direction const& direction) {
+    return out << '[' << direction.x << ", " << direction.y << ']';
 }
 
 Direction operator-(Coords const& to, Coords const& from) {
