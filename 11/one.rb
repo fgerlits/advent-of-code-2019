@@ -14,7 +14,7 @@ loop do
     return_code = computer.run
     output = computer.read_and_clear_output
 
-    output.each_cons(2) do |paint, direction|
+    output.each_slice(2) do |paint, direction|
         grid.put(paint)
         grid.turn(direction)
         grid.move
