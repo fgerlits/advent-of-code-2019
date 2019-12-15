@@ -7,4 +7,6 @@ computer = Computer.new(PROGRAM)
 grid = Grid.new
 
 dfs(computer, grid)
-puts bfs(grid, [0, 0])
+pos = grid.location_of_generator
+grid.set(pos, '.')
+puts bfs(grid, pos)
