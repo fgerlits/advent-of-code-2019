@@ -1,8 +1,10 @@
+#!/usr/bin/env ruby
+
 class Instruction
     def initialize(opcode)
         @instr = opcode % 100
         @modes = []
-        mode = opcode / 100
+        mode = opcode.abs / 100
         while mode != 0
             @modes << mode % 10
             mode /= 10
@@ -96,6 +98,69 @@ class Instruction
         end
         return :continue
     end
+
+    def format_input(context, position)
+        input = context.read(context.ip + position + 1)
+        case mode(position)
+            when 0 then "(#{input})"
+            when 1 then "#{input}"
+            when 2 then "(relative_base + #{input})"
+            else
+                throw "unexpected mode: #{mode(position)} in instruction #{self}"
+        end
+    end
+
+    def format_inputs(context, count)
+        count.times.map{|position| format_input(context, position)}
+    end
+
+    def to_s(context)
+        case @instr
+            when 1
+                a, b, c = format_inputs(context, 3)
+                context.ip += 4
+                "#{c} <- #{a} + #{b}"
+            when 2
+                a, b, c = format_inputs(context, 3)
+                context.ip += 4
+                "#{c} <- #{a} * #{b}"
+            when 3
+                a = format_inputs(context, 1)[0]
+                context.ip += 2
+                "#{a} <- input"
+            when 4
+                a = format_inputs(context, 1)[0]
+                context.ip += 2
+                "output <- #{a}"
+            when 5
+                a, b = format_inputs(context, 2)
+                context.ip += 3
+                "jump #{b} if #{a} != 0"
+            when 6
+                a, b = format_inputs(context, 2)
+                context.ip += 3
+                "jump #{b} if #{a} == 0"
+            when 7
+                a, b, c = format_inputs(context, 3)
+                context.ip += 4
+                "#{c} <- if #{a} < #{b} then 1 else 0"
+            when 8
+                a, b, c = format_inputs(context, 3)
+                context.ip += 4
+                "#{c} <- if #{a} == #{b} then 1 else 0"
+            when 9
+                a = format_inputs(context, 1)[0]
+                context.ip += 2
+                "relative_base += #{a}"
+            when 99
+                context.ip += 1
+                "stop"
+            else
+                value = context.read(context.ip)
+                context.ip += 1
+                "// #{value}"
+        end
+    end
 end
 
 class Computer
@@ -150,4 +215,22 @@ class Computer
             end
         end
     end
+
+    def print_program
+        @ip = 0
+        result = []
+        while @ip < @tape.size
+            ip = @ip
+            instruction = Instruction.new(@tape[@ip])
+            result << "#{ip}:\t#{instruction.to_s(self)}"
+        end
+        @ip = 0
+        result.join("\n")
+    end
+end
+
+if __FILE__ == $0
+    program = ARGF.read.split(',').map(&:to_i)
+    computer = Computer.new(program)
+    puts computer.print_program
 end
