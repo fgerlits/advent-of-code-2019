@@ -29,6 +29,7 @@ class Grid
         start_pos = @start_pos[0]
         [[-1, 0], [0, 0], [1, 0], [0, -1], [0, 1]].each{|dpos| set(add(start_pos, dpos), '#')}
         [[-1, -1], [-1, 1], [1, -1], [1, 1]].each{|dpos| set(add(start_pos, dpos), '@')}
+        @start_pos = find('@')
     end
 
     def to_s
@@ -77,7 +78,7 @@ class Grid
         result = []
         min_distance = {}
         progress = 0
-        todo_list = @start_pos.map{|pos| [pos, Set.new, 0]}
+        todo_list = [[@start_pos, Set.new, 0]]
         while !todo_list.empty?
             pos, keys, total_distance = todo_list.shift
             if keys.size == @num_keys
@@ -87,13 +88,17 @@ class Grid
                     progress = keys.size
                     puts progress
                 end
-                dfs(pos, keys).each do |key_pos, distance|
-                    new_keys = keys + [at(key_pos)]
-                    new_distance = total_distance + distance
-                    if min_distance[[new_keys, key_pos]].nil? ||
-                                new_distance < min_distance[[new_keys, key_pos]]
-                        min_distance[[new_keys, key_pos]] = new_distance
-                        todo_list << [key_pos, new_keys, new_distance]
+                pos.size.times do |index|
+                    dfs(pos[index], keys).each do |key_pos, distance|
+                        new_pos = pos.clone
+                        new_pos[index] = key_pos
+                        new_keys = keys + [at(key_pos)]
+                        new_distance = total_distance + distance
+                        if min_distance[[new_keys, new_pos]].nil? ||
+                                    new_distance < min_distance[[new_keys, new_pos]]
+                            min_distance[[new_keys, new_pos]] = new_distance
+                            todo_list << [new_pos, new_keys, new_distance]
+                        end
                     end
                 end
             end
