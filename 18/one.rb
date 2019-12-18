@@ -7,7 +7,7 @@ def add(pos, dpos)
 end
 
 class Grid
-    attr_reader :start_pos
+    attr_reader :start_pos, :num_keys
 
     def initialize(lines)
         @grid = lines.map{|line| line.chomp.each_char.to_a}
@@ -61,15 +61,26 @@ class Grid
 
     def find_paths_to_keys
         result = []
-        todo_list = [[start_pos, [], 0]]
+        min_distance = {}
+        progress = 0
+        todo_list = [[start_pos, Set.new, 0]]
         while !todo_list.empty?
             pos, keys, total_distance = todo_list.shift
             if keys.size == @num_keys
                 result << total_distance
             else
+                if keys.size > progress
+                    progress = keys.size
+                    puts progress
+                end
                 dfs(pos, keys).each do |key_pos, distance|
-                    #puts "keys: #{keys}, new key: #{at(key_pos)}"
-                    todo_list << [key_pos, keys + [at(key_pos)], total_distance + distance]
+                    new_keys = keys + [at(key_pos)]
+                    new_distance = total_distance + distance
+                    if min_distance[[new_keys, key_pos]].nil? ||
+                                new_distance < min_distance[[new_keys, key_pos]]
+                        min_distance[[new_keys, key_pos]] = new_distance
+                        todo_list << [key_pos, new_keys, new_distance]
+                    end
                 end
             end
         end
@@ -78,6 +89,7 @@ class Grid
 end
         
 grid = Grid.new(ARGF.readlines)
+puts grid.num_keys
 
 distances = grid.find_paths_to_keys
 puts distances.min
