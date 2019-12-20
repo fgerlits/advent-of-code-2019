@@ -44,7 +44,7 @@ class Grid
         @grid[pos[1]][pos[0]] = value
     end
 
-    def dfs(start, keys)
+    def bfs(start, keys)
         found = []
         seen = Set.new
         todo_list = [[start, 0]]
@@ -89,7 +89,7 @@ class Grid
                     puts progress
                 end
                 pos.size.times do |index|
-                    dfs(pos[index], keys).each do |key_pos, distance|
+                    bfs(pos[index], keys).each do |key_pos, distance|
                         new_pos = pos.clone
                         new_pos[index] = key_pos
                         new_keys = keys + [at(key_pos)]
