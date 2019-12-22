@@ -2,28 +2,29 @@
 
 INPUT = ARGF.readlines.map(&:chomp)
 SIZE = 10007
-position = 2019
-INPUT.each do |shuffle|
-    case shuffle
-    when /cut (\d+)/
-        n = $1.to_i
-        if position < n
-            position += SIZE - n
-        else
-            position -= n
+START_POSITION = 2019
+
+def compute_shuffle
+    a, c = 1, 0     # shuffle is ax + c
+    INPUT.each do |shuffle|
+        case shuffle
+        when /cut (\d+)/
+            n = $1.to_i
+            c = (c - n) % SIZE
+        when /cut -(\d+)/
+            n = $1.to_i
+            c = (c + n) % SIZE
+        when /deal into new stack/
+            a = (-a) % SIZE
+            c = (-c - 1) % SIZE
+        when /deal with increment (\d+)/
+            n = $1.to_i
+            a = (a * n) % SIZE
+            c = (c * n) % SIZE
         end
-    when /cut -(\d+)/
-        n = $1.to_i
-        if position < SIZE - n
-            position += n
-        else
-            position -= SIZE - n
-        end
-    when /deal into new stack/
-        position = (SIZE - 1) - position
-    when /deal with increment (\d+)/
-        n = $1.to_i
-        position = (position * n) % SIZE
     end
+    [a, c]
 end
-puts position
+
+a, c = compute_shuffle
+p (a * START_POSITION + c) % SIZE
