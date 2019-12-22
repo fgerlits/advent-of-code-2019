@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-def inverse_modulo(x, n)
+def inverse(x, n)
     r = [n, x]
     t = [0, 1]
     while r[1] != 0
@@ -11,49 +11,53 @@ def inverse_modulo(x, n)
     t[0]
 end
 
-INPUT = ARGF.readlines.map(&:chomp).reverse
+def power(x, k, n)
+    if k == 0
+        1
+    elsif k % 2 == 0
+        a = power(x, k / 2, n)
+        (a * a) % n
+    else
+        a = power(x, k / 2, n)
+        (a * a * x) % n
+    end
+end
+
+INPUT = ARGF.readlines.map(&:chomp)
 SIZE = 119315717514047
 START_POSITION = 2020
 ITERATIONS = 101741582076661
 
-def iterate(position)
+def compute_shuffle
+    a, c = 1, 0     # shuffle is ax + c
     INPUT.each do |shuffle|
         case shuffle
         when /cut (\d+)/
             n = $1.to_i
-            if position < SIZE - n
-                position += n
-            else
-                position -= SIZE - n
-            end
+            c = (c - n) % SIZE
         when /cut -(\d+)/
             n = $1.to_i
-            if position < n
-                position += SIZE - n
-            else
-                position -= n
-            end
+            c = (c + n) % SIZE
         when /deal into new stack/
-            position = (SIZE - 1) - position
+            a = (-a) % SIZE
+            c = (-c - 1) % SIZE
         when /deal with increment (\d+)/
             n = $1.to_i
-            position = (position * inverse_modulo(n, SIZE)) % SIZE
+            a = (a * n) % SIZE
+            c = (c * n) % SIZE
         end
     end
-    position
+    [a, c]
 end
 
-def find_cycle
-    cycle = [START_POSITION]
-    loop do
-        position = iterate(cycle.last)
-        if position == START_POSITION
-            return cycle
-        else
-            cycle << position
-        end
-    end
-end
+a, c = compute_shuffle
 
-cycle = find_cycle
-puts cycle[ITERATIONS % cycle.size]
+# invert
+ax = inverse(a, SIZE) % SIZE
+cx = (-c) * ax % SIZE
+
+# power
+an = power(ax, ITERATIONS, SIZE)
+cn = (cx * (an - 1) * inverse(ax - 1, SIZE)) % SIZE
+
+puts (an * START_POSITION + cn) % SIZE
