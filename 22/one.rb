@@ -1,40 +1,29 @@
 #!/usr/bin/env ruby
 
-def cut_positive(cards, n)
-    cut = cards.shift(n)
-    cards + cut
-end
-
-def cut_negative(cards, n)
-    cut = cards.pop(n)
-    cut + cards
-end
-
-def reverse(cards)
-    cards.reverse
-end
-
-def multiply(cards, n)
-    result = [0] * SIZE
-    cards.each_with_index do |card, i|
-        result[(i * n) % SIZE] = card
-    end
-    result
-end
-
 INPUT = ARGF.readlines.map(&:chomp)
 SIZE = 10007
-cards = (0...SIZE).to_a
+position = 2019
 INPUT.each do |shuffle|
     case shuffle
-    when /cut -(\d+)/
-        cards = cut_negative(cards, $1.to_i)
     when /cut (\d+)/
-        cards = cut_positive(cards, $1.to_i)
+        n = $1.to_i
+        if position < n
+            position += SIZE - n
+        else
+            position -= n
+        end
+    when /cut -(\d+)/
+        n = $1.to_i
+        if position < SIZE - n
+            position += n
+        else
+            position -= SIZE - n
+        end
     when /deal into new stack/
-        cards = reverse(cards)
+        position = (SIZE - 1) - position
     when /deal with increment (\d+)/
-        cards = multiply(cards, $1.to_i)
+        n = $1.to_i
+        position = (position * n) % SIZE
     end
 end
-puts cards.find_index(2019)
+puts position
