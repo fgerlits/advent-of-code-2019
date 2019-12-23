@@ -2,6 +2,7 @@
 
 class Instruction
     def initialize(opcode)
+        @opcode = opcode
         @instr = opcode % 100
         @modes = []
         mode = opcode.abs / 100
@@ -114,7 +115,7 @@ class Instruction
         count.times.map{|position| format_input(context, position)}
     end
 
-    def to_s(context)
+    def to_string(context)
         case @instr
             when 1
                 a, b, c = format_inputs(context, 3)
@@ -156,10 +157,12 @@ class Instruction
                 context.ip += 1
                 "stop"
             else
-                value = context.read(context.ip)
                 context.ip += 1
-                "// #{value}"
+                "// #{@opcode}"
         end
+    rescue
+        context.ip += 1
+        "// #{@opcode}"
     end
 end
 
@@ -206,10 +209,13 @@ class Computer
         output
     end
 
+    def step
+        Instruction.new(@tape[@ip]).execute(self)
+    end
+
     def run
         loop do
-            instruction = Instruction.new(@tape[@ip])
-            return_code = instruction.execute(self)
+            return_code = step()
             if return_code != :continue
                 return return_code
             end
@@ -222,7 +228,7 @@ class Computer
         while @ip < @tape.size
             ip = @ip
             instruction = Instruction.new(@tape[@ip])
-            result << "#{ip}:\t#{instruction.to_s(self)}"
+            result << "#{ip}:\t#{instruction.to_string(self)}"
         end
         @ip = 0
         result.join("\n")
