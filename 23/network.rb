@@ -10,31 +10,47 @@ class Network
         end
     end
 
-    def iterate
+    def iterate(mode)
         finished = false
+
         @computers.zip(@queues).each do |computer, queue|
             return_code = computer.run()
-            case return_code
-            when :wait_for_input
+            if return_code == :wait_for_input
                 if queue.empty?
                     computer.add_inputs([-1])
                 else
                     computer.add_inputs(queue.shift(2))
                 end
                 computer.run()
-            when :exit
-                finished = true
             end
+
             outputs = computer.read_and_clear_output
             outputs.each_slice(3) do |index, x, y|
                 if index >= 0 && index < NUM_NODES
                     @queues[index] << x << y
+                elsif index == 255
+                    if mode == :one
+                        puts "#{index} <- #{x} #{y}"
+                        finished = true
+                    else
+                        @nat = [x, y]
+                    end
                 else
-                    puts "#{index} <- #{x} #{y}"
-                    finished = true
+                    raise "unknown address #{index} for package #{[x, y]}"
                 end
             end
         end
+
+        if mode == :two && @queues.all?(&:empty?)
+            @queues[0] += @nat
+            if @nat[1] == @last_package
+                puts @nat[1]
+                finished = true
+            else
+                @last_package = @nat[1]
+            end
+        end
+
         !finished
     end
 end
